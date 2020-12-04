@@ -1,0 +1,270 @@
+----- sprite IDs
+0264: k.rool
+0268: k.rool's gun
+0270: cannon ball
+0298: smoke cloud
+029C: k.rool eyes
+02A0: spikeball
+
+
+
+----- ram addresses
+0x0652w: shot type or phase counter, counting down
+	9: normal cannonball
+	8: spikeball, retracts spikes after a while
+	7: two spikeballs
+0x065Aw: loop point offset
+
+0x06A3w: ?
+
+0x0721w: wait timer
+0x0723w: acceleration factor?
+0x0725w: dash x target
+0x0727w: shot count per phase?
+0x0729w: wait timer before shooting
+0x072Dw: vacuum timer
+0x072Fw: slide puff creation timer
+0x0735w: ?
+0x073Bw: ?
+0x073Fw: ?
+0x0741w: ?
+0x0743w: ?
+0x0745w: ?
+
+0x0919w: kong afflicted by gas
+
+----- k.rool commands
+0002 xxxx
+goto xxxx, if 0, goto 0x0652w. subroutine entrypoint?
+
+-----
+0028 xxxx
+wait for xxxx frames
+
+-----
+0029 xxxx yyyy
+dash command
+xxxx / -xxxx = target speed
+yyyy = acceleration factor
+
+clear current / target Y speed
+set dash target based on sprite facing (0x0240 / 0x015A)
+set current speed to 0x0081 / 0xFF7F
+wait timer = 0x0012
+
+-----
+002A (B6C2C1)
+shoot
+sets to shooting state and does stuff later:
+
+-----
+002B
+vacuum
+
+-----
+002C (B6C137)
+retract spikes on cannonball
+
+-----
+002D xxxx
+conditional jump, checks 0x0735
+
+-----
+002E xxxx yyyy zzzz aaaa bbbb cccc (B6C0BF)
+spawn item
+xxxx = address to item definition within bank FF
+yyyy = X position
+zzzz = Y position
+aaaa = subroutine address within bank B6
+bbbb = smoke X offset
+cccc = smoke Y offset
+
+-----
+0033 xxxx (B6BF3A)
+transparency, 0x1000 = transparent
+
+-----
+0036 xxxx (B6BE97)
+wait xxxx frames if the player has been hit by any of the 3 gas types
+
+-----
+0037 xxxx yyyy zzzz (B6BE39)
+
+
+
+----- rom
+0x36908D: start of k.rool battle data
+
+908D:              | "start"
+	0028 0064      | wait(100f)
+	0002 90DB      | goto 90DB
+
+	????
+
+
+90DB:              | "first pattern"
+	002A           | shoot
+	0028 00F0      | wait(240f)
+	0029 0500 0003 | dash(speed=0x0500, acceleration=3)
+	0028 0032      | wait(50f)
+	002B           | vacuum
+90ED:              | "first pattern, loop point"
+	0028 0032      | wait(50f)
+	002A           | shoot
+	0028 0050      | wait(80f)
+	0029 0500 0004 | dash(speed=0x0500, acceleration=4)
+	0028 0032      | wait(50f)
+	002B           | vacuum
+	0002 90ED      | goto 90ED
+
+9109:              | "second pattern"
+	0028 0032      | wait(50f)
+	002A           | shoot
+	0028 0078      | wait(120f)
+	0029 0500 0006 | dash(speed=0x0500, acceleration=6)
+	0028 000A      | wait(10f)
+	0029 0500 0006 | dash(speed=0x0500, acceleration=6)
+	002C           | retract spikes
+	0028 0032      | wait(50f)
+	002B           | vacuum
+	0002 0000      | goto 9109
+
+912F:              | "third pattern"
+	0028 003C      | wait(60f)
+	002A           | shoot
+	0028 0050      | wait(80f)
+	0029 0540 0006 | dash()
+	0028 000A      | wait(10f)
+	0029 0540 0006 | dash()
+	0028 000A      | wait(10f)
+	0029 0540 0006 | dash()
+	0028 0028      | wait()
+	002C           | retract spikes
+	0028 0050      | wait(80f)
+	002B           | vacuum
+	0002 0000      | goto 912F
+
+9163:              | "fourth pattern"
+	002E 2212 01C8 0170 ADB7 0000 FFEA | spawn item
+9171:
+	0028 0050      | wait(80f)
+	002A           | shoot
+	0028 005A      | wait()
+	002D 9171      | conditional jump to 9171
+	002B           | vacuum
+	0002 9171      | goto 9171
+
+
+-----
+phase1: ;949C
+	lda #$051A : jsl $B58003
+	ldy #$1F86 : jsl $BB8432
+	jsr $99C5
+	lda $002E,Y : ora #$0090 : sta $002E,Y
+	lda $12,X ;k.rool facing
+	bit #$4000
+	bne _94C8
+
+	lda #$0300 : sta $0020,Y ;current X speed
+	lda #$0000
+	bra _94D1
+
+_94C8:
+	lda #$FD00 : sta $0020,Y ;current X speed
+	lda #$0000
+_94D1:
+	sta $0026,Y ;target X speed
+	lda #$0005 : sta $0042,Y
+	lda #$0003 : sta $0044,Y
+	lda #$0000 : sta $0024,Y ;current Y speed
+	lda #$0200 : sta $002A,Y ;target Y speed
+	lda #$0001 : sta $0046,Y
+	rts
+
+
+phase2: ;94F3
+	lda #$051A : jsl $B58003
+	ldy #$1F86 : jsl $BB8432
+	jsr $99C5
+	lda $002E,Y : ora #$0200 : sta $002E,Y
+	sty $0735
+	jsr $9557
+	lda $12,X
+	bit #$4000
+	bne _9525
+	lda #$0300 : sta $0020,Y
+	lda #$0000
+	bra _952E
+
+_9525:
+	lda #$FD00 : sta $0020,Y
+	lda #$0000
+_952E:
+	sta $0026,Y
+	lda #$0005 : sta $0042,Y
+	lda #$0003 : sta $0044,Y
+	lda #$0000 : sta $0024,Y
+	lda #$0200 : sta $002A,Y
+	lda #$001A : sta $0046,Y
+	lda #$0289 : jsr $B9D09B
+	rts
+
+
+_9557:
+	lda $002E,Y : ora #$0092 : sta $002E,Y
+	rts
+
+_9561:
+	lda #$0008 : sta $0046,Y
+	lda $000735
+	bne _9570
+	sty $0735
+_9570:
+	bra _95AC
+
+phase3: ;9572
+	lda #$051A : jsl $B58003
+	ldy #$1F86 : jsl $BB8432
+	jsr $99C5
+	lda $002E,Y : ora #$0200 : sta $002E,Y
+	lda $000727
+	cmp #$0001
+	beq _9561
+	lda #$002E : sta $0046,Y
+	lda #$002D : sta $000729
+	lda $2A
+	bit #$0001
+	beq _95AC
+	sty $0735
+_95AC:
+	jsr _9557
+	lda $12,X
+	bit #$4000
+	bne _95C1
+	lda #$0300 : sta $0020,Y
+	lda #$0000
+	bra _95CA
+
+_95C1:
+	lda #$FD00 : sta $0020,Y
+	lda #$0000
+_95CA:
+	sta $0026,Y
+	lda #$0005 : sta $0042,Y
+	lda #$0003 : sta $0044,Y
+	lda #$0000 : sta $0024,Y
+	lda #$0200 : sta $002A,Y
+	lda #$0289 : jsr $B9D09B
+	rts
+
+
+phase4: ;95ED
+	
+-----
+
+
+0xB6959B: lda #$002D | wait timer for phase #3
+0xBAAD41: shot counts per phase, going backwards (AAD0 is 2nd value etc)
+0xB6C337: jsr ($C2F7,X) 0000 9877 9917 97FC 9747 96B5 95ED 9572 94F3 949C | phase list, reversed
+
+97FC: ice gas

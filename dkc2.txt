@@ -1,0 +1,256 @@
+mixed testing on US rev0 / JP rev0, oops
+
+==========
+RAM
+==========
+
+
+----------
+
+0x006Ew: 0000=kongs, 0190=squitter, 0194=rattly, 0198=squawks, 019C=rambi, 01A0=enguarde
+0x00D3: level ID
+
+0x0502w: 1P, pressed buttons
+0x0506w: 1P, pressed buttons this frame
+
+0x0654w: currently selected dialog option
+0x06B6b: dialog select sprite Y position
+
+0x08A4: active kong
+0x08A6: level starting point
+0x08AAw: stored starting point (for stage ID stored in 0x08AC)
+0x08ACw: stored level ID for 0x08AA
+0x08BE: extra lives
+0x08C3: bit 6: two kongs available
+0x08CA: banana coins
+0x08CC: tokens
+0x08CE: DK coins
+
+0x0902b: KONG letter bitfield
+
+0x0919: have been hit by reverse gas (0x01) or slow gas (0x02). only works on final boss stage
+
+0x0926: slow timer, see 0x0928
+0x0928: slow effect. freezes player for [0x0926] frames. 0x00 - 0x80 works well, above works less well (signed value check of some kind)
+
+0x0B02: status effect flags of some sort. 0x10 = reverse controls, 0x20 = slow (see 0x0926 & 0x0928)
+
+0x0D4Aw: water speed
+0x0D4Cw: water level, fractional
+0x0D4Ew: water level
+0x0D50w: water speed target
+0x0D52w: water level target
+
+----------
+
+object size = 94 bytes (0x5E)
+diddy, dixie objects: 0x0DE2 0x0E40
+some object offsets:
+0x0E9E 0x0EFC 0x0F5A 0x0FB8 0x1016 0x1074 0x10D2 0x1130
+
+only uses 16 bit variables?
+
+0x04: x fractional (upper byte only)
+0x06: x pos
+0x08: y fractional (upper byte only)
+0x0A: y pos
+
+0x20: x speed + fractional
+0x22: (kannon) shoot this type
+0x24: y speed + fractional
+0x26: accelerate towards this speed, x speed + fractional
+
+----------
+
+0x59D2: dk coin bitfield
+0x59F2: start+select bitfield
+
+----------
+
+goal post / chest contents?
+
+0x1Aw roulette item sprite
+0x44 *2, indexes into 0x0054
+0x46w timer
+0x48 item type
+0x54w base offset, for bank 3F
+
+0x3FC564: 0x170 (banana cluster)
+
+
+00 banana cluster
+01 K
+02 O
+03 N
+04 G
+05 DK barrel
+06 TNT barrel
+07 invincibility barrel
+08 1up balloon
+09 2up balloon
+0A 3up balloon
+0B banana cluster
+0C banana coin
+0D banana coin
+0E banana coin
+0F banana coin
+10 token
+11 DK coin
+12 cannon ball
+19 banana
+
+
+3F1A8E
+
+
+interesting sprites for roulette
+0x3170 (bonus barrel "B")
+
+==========
+ROM
+==========
+
+
+----------
+
+https://en.wikibooks.org/wiki/Super_NES_Programming/SNES_memory_map#HiROM
+
+----------
+
+0x34BE7D: 27 (mario DK coins)
+0x34BE85: 1D (yoshi DK coins)
+0x34BE8D: 13 (link DK coins)
+
+0x36B706w: 0128,0BB0 016C,0B70, 01B0,0B30 hook spawns
+0x36B720w: ghost bird barrel spawns, 3 X,Y pairs per phase (3)
+
+0x3BAC73w: 0x1700 (initial water level target for slime climb)
+0x3BAC75w: 0x0EE0 (midway water level target for slime climb)
+0x3BAC77w: 0x0EE0 (bonus 1 water level target for slime climb)
+0x3BAC79w: 0x0280 (bonus 2 water level target for slime climb)
+
+0x3BACCFw: 0x0160 (bonus 1 water level target for artic abyss)
+
+----------
+
+0x3F06B0: start of object def list for the credits walk
+
+----------
+
+JP rev0
+0x3FC523 - 0x3FC52B: goal post rotation
+0x3FC53C - 0x3FC546: goal post rotation (unused?)
+
+US rev0
+0x3FC521 - 0x3FC529: rotation (stage 1)
+0x3FC53C - 0x3FC544: rotation
+
+goal post rotation: byte pairs (timer, object) + ending zero byte
+
+----------
+
+
+==========
+Code
+==========
+
+
+----------
+
+FB8474: create item function start?
+
+312C create rat
+373E (US: 373A) create 1-1 bonus barrel
+
+
+(rom) 0x3F1A9E: 0x1870 "create 1up balloon" offset, used by goal post for example
+
+----------
+
+update rng (USrev0)
+
+F4/C12D:	A52E    	lda $2E
+F4/C12F:	48      	pha 
+F4/C130:	A530    	lda $30
+F4/C132:	2A      	rol A
+F4/C133:	48      	pha 
+F4/C134:	A52F    	lda $2F
+F4/C136:	4301    	eor $01,S
+F4/C138:	852E    	sta $2E
+F4/C13A:	68      	pla 
+F4/C13B:	68      	pla 
+F4/C13C:	8530    	sta $30
+F4/C13E:	A52E    	lda $2E
+F4/C140:	E62E    	inc $2E
+F4/C142:	6B      	rtl
+
+----------
+
+snippet that gets "base palette"
+palettes are at 0x3Dxxxx, where xxxx is the "base palette"
+
+FB/94AC:	AD8E0A  	lda $0A8E
+FB/94AF:	A22000  	ldx #$0020
+FB/94B2:	228980BB	jsr $BB8089
+
+FB/8090:	8D0543  	sta $4305
+FB/8093:	A90022  	lda #$2200
+FB/8096:	8D0043  	sta $4300
+FB/8099:	E220    	sep #$20
+FB/809B:	A9FD    	lda #$FD
+FB/809D:	8D0443  	sta $4304
+FB/80A0:	98      	tya 
+FB/80A1:	8D2121  	sta $2121
+FB/80A4:	A901    	lda #$01
+FB/80A6:	8D0B42  	sta $420B
+FB/80A9:	C220    	rep #$20
+FB/80AB:	6B      	rtl
+
+FB/94B6:	60      	rts
+
+----------
+
+this is a snippet of code that activates slomo.
+insert it somewhere (i used 0x3FFFDE here) and replace a jsl with jsl $3FFFDE to reach it.
+
+0x3B9279: jsl $8085B5 (adds slomo to every level)
+0x3B9283: jsl $BBAEFF (A=level id?)
+
+0x3FFFDE:
+php
+pha
+
+and #$00FF
+cmp #$0029
+beq slomo
+cmp #$008B
+bne noslomo
+
+slomo:
+lda #$0001
+sta $0926
+lda #$0020
+sta $0B02
+
+noslomo:
+pla
+plp
+jsl $BBAEFF ;the replaced jsl goes here instead
+rtl
+
+----------
+
+
+==========
+saveRAM
+==========
+
+
+----------
+
+save slot offsets: 0x008, 0x2B0, 0x558
+save slot size: 0x2A8
+
+8 bytes before first slot. unused?
+
+----------

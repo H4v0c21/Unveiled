@@ -1,0 +1,41 @@
+3AC3D0 = start of list, 0x12 bytes per object
+
+-----
+
+0x00w = function offset:
+
+	from k.rool 1
+	0x949C = landing cannon ball, locks the game
+	0x94F3 = landing spike ball, locks the game
+	0x9572 = landing spike ball 2, crash
+	0x96B5 = bouncing spike ball, locks the game
+	0x9747 = spinning spike ball, locks the game
+	0x97FC = blue gas (works like purple gas if used in k.rool 2)
+
+	0x95ED = spike ball
+	0x99A8 = purple gas
+0x02w = x speed, px.f
+0x04w = y speed, px.f
+0x06w = x speed target, px.f
+0x08w = y speed target, px.f
+0x0Aw = ?, stored in obj->0x42
+0x0Cw = ?, stored in obj->0x44
+0x0Ew = cooldown timer after shot
+0x10w = height offset, px
+
+-----
+
+$99A8, $0200, $0000, $0200, $0000, $0000, $0000, $0078, $0000 | 1st shot, gas
+$95ED, $0280, $0000, $0280, $0000, $0000, $0000, $0046, $0000 | 2nd shot, spike ball
+$95ED, $0280, $0000, $0280, $0000, $0000, $0000, $0041, $0000
+$95ED, $02C0, $0000, $02C0, $0000, $0000, $0000, $003C, $0010
+$95ED, $02C0, $0000, $02C0, $0000, $0000, $0000, $0037, $FFF0
+$95ED, $0300, $0000, $0300, $0000, $0000, $0000, $0032, $0010
+$95ED, $0300, $0000, $0300, $0000, $0000, $0000, $002D, $FFF0
+$95ED, $0340, $0000, $0340, $0000, $0000, $0000, $0096, $0000
+$99A8, $0280, $0000, $0280, $0000, $0000, $0000, $0032, $000C
+$99A8, $0280, $0000, $0280, $0000, $0000, $0000, $0078, $FFF0
+$95ED, $0300, $0000, $0300, $0000, $0000, $0000, $002D, $0010
+$95ED, $0300, $0000, $0300, $0000, $0000, $0000, $0028, $FFF0
+$95ED, $0300, $0000, $0300, $0000, $0000, $0000, $0028, $0010
+...
